@@ -140,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && empty($error)) {
                     <label for="remember">Remember me</label>
                 </div>
                 <div class="forgot-password">
-                    <a href="forgot-password.php">Forgot password?</a>
+                    <a href="top/forgot-password.php">Forgot password?</a>
                 </div>
             </div>
             
