@@ -8,6 +8,9 @@ if (isLoggedIn()) {
     header("Location: " . (isAdmin() ? "admin/dashboard.php" : "user/dashboard.php"));
     exit();
 }
+
+// Track version
+$system_version = "1.05";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,9 +18,10 @@ if (isLoggedIn()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Secure file management system for organizing and sharing your documents, images, and videos">
-    <title>Welcome to File Management System</title>
+    <meta name="version" content="<?php echo $system_version; ?>">
+    <title>Welcome to File Management System v<?php echo $system_version; ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo $system_version; ?>">
     <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
     <style>
         /* Modern CSS Reset and Base Styles */
@@ -105,10 +109,21 @@ if (isLoggedIn()) {
             color: white;
         }
 
+        .version-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
         .landing-container h1 {
             font-size: 2.75rem;
             font-weight: 800;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
             background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -193,6 +208,60 @@ if (isLoggedIn()) {
             color: var(--medium-gray);
             margin-bottom: 0;
             line-height: 1.7;
+        }
+
+        /* New Features Section */
+        .new-features {
+            width: 100%;
+            max-width: 1200px;
+            margin: 4rem 0;
+            text-align: center;
+            background: rgba(67, 97, 238, 0.05);
+            padding: 2.5rem;
+            border-radius: var(--border-radius);
+            border: 1px dashed var(--primary-color);
+        }
+
+        .new-features h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .new-features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            text-align: left;
+            margin-top: 1.5rem;
+        }
+
+        .new-feature-item {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .new-feature-item i {
+            color: var(--success-color);
+            font-size: 1.2rem;
+            margin-top: 0.2rem;
+        }
+
+        .new-feature-item div h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+
+        .new-feature-item div p {
+            font-size: 0.95rem;
+            color: var(--medium-gray);
+            line-height: 1.6;
         }
 
         /* Media Preview Section */
@@ -600,6 +669,19 @@ if (isLoggedIn()) {
                 font-size: 0.95rem;
             }
 
+            .new-features {
+                padding: 1.5rem;
+                margin: 3rem 0.5rem;
+            }
+
+            .new-features h2 {
+                font-size: 1.5rem;
+            }
+
+            .new-features-list {
+                grid-template-columns: 1fr;
+            }
+
             .media-section,
             .testimonials {
                 margin: 3rem 0;
@@ -679,7 +761,8 @@ if (isLoggedIn()) {
             @media (prefers-color-scheme: dark) {
                 .feature-card,
                 .media-preview,
-                .testimonial-card {
+                .testimonial-card,
+                .new-features {
                     background-color: #2a2a2a;
                 }
                 
@@ -740,19 +823,22 @@ if (isLoggedIn()) {
 
             .feature-card,
             .media-preview,
-            .testimonial-card {
+            .testimonial-card,
+            .new-features {
                 background-color: #252525;
                 border-color: #333;
             }
 
             .feature-card h3,
             .media-info h4,
-            .testimonial-content {
+            .testimonial-content,
+            .new-feature-item div h4 {
                 color: #ffffff;
             }
 
             .feature-card p,
-            .media-info p {
+            .media-info p,
+            .new-feature-item div p {
                 color: #a0a0a0;
             }
 
@@ -768,6 +854,11 @@ if (isLoggedIn()) {
 
             .footer {
                 border-color: #333;
+            }
+
+            .new-features {
+                background: rgba(67, 97, 238, 0.1);
+                border-color: var(--primary-color);
             }
         }
 
@@ -791,6 +882,7 @@ if (isLoggedIn()) {
                 <i class="fas fa-cloud-upload-alt"></i>
             </div>
             <h1>File Management System</h1>
+            <span class="version-badge">v<?php echo $system_version; ?></span>
         </div>
         
         <p class="subtitle">A secure and intuitive platform to manage, organize, and share your files. Perfect for individuals and teams to collaborate efficiently.</p>
@@ -819,6 +911,43 @@ if (isLoggedIn()) {
                 <i class="fas fa-film"></i>
                 <h3>Video Streaming</h3>
                 <p>Upload and stream videos in 4K quality with adaptive bitrate. Supports subtitles, chapters, and playback speed control.</p>
+            </div>
+        </div>
+
+        <!-- New in Version 1.05 Section -->
+        <div class="new-features">
+            <h2><i class="fas fa-star"></i> New in Version 1.05</h2>
+            <p>We've added exciting new features and improvements to enhance your file management experience.</p>
+            
+            <div class="new-features-list">
+                <div class="new-feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <h4>Enhanced Security</h4>
+                        <p>Added two-factor authentication and improved file encryption for better protection.</p>
+                    </div>
+                </div>
+                <div class="new-feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <h4>Dark Mode</h4>
+                        <p>System-wide dark theme support with automatic detection of user preferences.</p>
+                    </div>
+                </div>
+                <div class="new-feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <h4>PDF Preview</h4>
+                        <p>Built-in PDF viewer with text search and thumbnail navigation.</p>
+                    </div>
+                </div>
+                <div class="new-feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <h4>Performance Boost</h4>
+                        <p>Up to 40% faster file operations with optimized database queries.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -910,11 +1039,13 @@ if (isLoggedIn()) {
 
         <div class="footer">
             <p>© <?php echo date('Y'); ?> File Management System. All rights reserved.</p>
+            <p>Version <?php echo $system_version; ?></p>
             <div class="footer-links">
-                <a href="Privacy Policy.php">Privacy Policy</a>
-                <a href="Terms of Service.php">Terms of Service</a>
+                <a href="privacy-policy.php">Privacy Policy</a>
+                <a href="terms-of-service.php">Terms of Service</a>
                 <a href="contact-us.php">Contact Us</a>
                 <a href="support.php">Support</a>
+                <a href="changelog.php">Changelog</a>
             </div>
         </div>
     </div>
@@ -960,7 +1091,32 @@ if (isLoggedIn()) {
                     });
                 });
             });
-        });
-    </script>
-</body>
-</html>
+
+            // Version check notification
+            const currentVersion = '<?php echo $system_version; ?>';
+            const lastVersion = localStorage.getItem('lastVersionSeen');
+            
+            if (lastVersion !== currentVersion) {
+                // Show update notification
+                const updateNotice = document.createElement('div');
+                updateNotice.style.position = 'fixed';
+                updateNotice.style.bottom = '20px';
+                updateNotice.style.right = '20px';
+                updateNotice.style.padding = '15px 20px';
+                updateNotice.style.backgroundColor = 'var(--primary-color)';
+                updateNotice.style.color = 'white';
+                updateNotice.style.borderRadius = 'var(--border-radius-sm)';
+                updateNotice.style.boxShadow = 'var(--box-shadow-lg)';
+                updateNotice.style.zIndex = '1000';
+                updateNotice.style.display = 'flex';
+                updateNotice.style.alignItems = 'center';
+                updateNotice.style.gap = '10px';
+                updateNotice.style.animation = 'fadeInUp 0.5s ease-out';
+                updateNotice.innerHTML = `
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>Welcome to version ${currentVersion}!</strong>
+                        <div style="font-size:0.9rem;margin-top:3px">Check out what's new.</div>
+                    </div>
+                    <button style="margin-left:10px;background:none;border:none;color:white;cursor:pointer" onclick="this.parentNode.remove()">
+                        <i class="fas fa
