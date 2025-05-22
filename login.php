@@ -5,72 +5,87 @@ require_once 'includes/auth.php';
 // Redirect if already logged in
 if (isLoggedIn()) {
     header("Location: " . (isAdmin() ? "admin/dashboard.php" : "user/dashboard.php"));
-    exit;
+    exit();
 }
 
 $error = '';
 $username = '';
 $remember = false;
 
-// Auto-login via Remember Token
-if (!empty($_COOKIE['remember_token'])) {
+// Check for existing remember me cookie
+if (isset($_COOKIE['remember_token'])) {
     require_once 'includes/database.php';
-    $stmt = $pdo->prepare("SELECT user_id, username FROM remember_tokens WHERE token = ? AND expires_at > NOW() LIMIT 1");
-    $stmt->execute([$_COOKIE['remember_token']]);
-    if ($tokenData = $stmt->fetch()) {
+    $token = $_COOKIE['remember_token'];
+    $stmt = $pdo->prepare("SELECT user_id, username FROM remember_tokens WHERE token = ? AND expires_at > NOW()");
+    $stmt->execute([hash('sha256', $token)]);
+    $tokenData = $stmt->fetch();
+    
+    if ($tokenData) {
         if (login($tokenData['username'], '', true)) {
             header("Location: " . (isAdmin() ? "admin/dashboard.php" : "user/dashboard.php"));
-            exit;
+            exit();
         }
     }
+    // Clear invalid cookie
     setcookie('remember_token', '', time() - 3600, '/', '', true, true);
 }
 
-// Rate limit
+// Implement rate limiting
 $loginAttempts = $_SESSION['login_attempts'] ?? 0;
 $lastAttempt = $_SESSION['last_login_attempt'] ?? 0;
 $timeSinceLastAttempt = time() - $lastAttempt;
 
-if ($loginAttempts >= 3 && $timeSinceLastAttempt < 30) {
-    $error = "Too many login attempts. Please wait " . (30 - $timeSinceLastAttempt) . " seconds.";
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error) {
-    $username = trim($_POST['username'] ?? '');
+if ($loginAttempts >= 5 && $timeSinceLastAttempt < 300) { // 5 attempts max, 5 min cooldown
+    $error = 'Too many login attempts. Please try again in ' . (300 - $timeSinceLastAttempt) . ' seconds.';
+} elseif ($_SERVER['REQUEST_METHOD'] == 'POST' && empty($error)) {
+    // Sanitize and validate inputs
+    $username = trim(filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING));
     $password = $_POST['password'] ?? '';
     $remember = isset($_POST['remember']);
-
-    if (!$username || !$password) {
+    
+    if (empty($username) || empty($password)) {
         $error = 'Both username and password are required';
     } else {
         $_SESSION['login_attempts'] = $loginAttempts + 1;
         $_SESSION['last_login_attempt'] = time();
-
+        
         if (login($username, $password)) {
-            unset($_SESSION['login_attempts'], $_SESSION['last_login_attempt']);
-
+            // Reset attempt counter
+            unset($_SESSION['login_attempts']);
+            unset($_SESSION['last_login_attempt']);
+            
+            // Handle "Remember Me"
             if ($remember) {
                 $token = bin2hex(random_bytes(32));
-                $expires = time() + 2592000; // 30 days
-                $pdo->prepare("INSERT INTO remember_tokens (user_id, token, expires_at) VALUES (?, ?, FROM_UNIXTIME(?))")
-                    ->execute([$_SESSION['user_id'], $token, $expires]);
+                $expires = time() + 60 * 60 * 24 * 30; // 30 days
+                
+                $stmt = $pdo->prepare("INSERT INTO remember_tokens (user_id, token, expires_at) VALUES (?, ?, FROM_UNIXTIME(?))");
+                $stmt->execute([
+                    $_SESSION['user_id'],
+                    hash('sha256', $token),
+                    $expires
+                ]);
+                
                 setcookie('remember_token', $token, [
                     'expires' => $expires,
                     'path' => '/',
+                    'domain' => '',
                     'secure' => true,
                     'httponly' => true,
                     'samesite' => 'Strict'
                 ]);
             }
-
+            
+            // Redirect to dashboard
             header("Location: " . (isAdmin() ? "admin/dashboard.php" : "user/dashboard.php"));
-            exit;
+            exit();
         } else {
             $error = 'Invalid username or password';
         }
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -79,7 +94,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error) {
     <title>Login - File Management System</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    
+    
 
+    <!-- Preload critical resources -->
+    <link rel="preload" href="assets/css/main.css" as="style">
+    <link rel="preload" href="assets/js/login.js" as="script">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" crossorigin="anonymous">
+    
 </head>
 <body>
     <div class="login-container">
@@ -150,102 +175,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error) {
         <button id="acceptCookies">Accept</button>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const loginForm = document.getElementById('loginForm');
-            const loginBtn = document.getElementById('loginBtn');
-            const togglePassword = document.getElementById('togglePassword');
-            const passwordInput = document.getElementById('password');
-            const cookieConsent = document.getElementById('cookieConsent');
-            const acceptCookiesBtn = document.getElementById('acceptCookies');
-            
-            // Check if cookies are accepted
-            if (!localStorage.getItem('cookiesAccepted')) {
-                setTimeout(() => {
-                    cookieConsent.classList.add('show');
-                }, 1000);
-            }
-            
-            // Accept cookies
-            acceptCookiesBtn.addEventListener('click', function() {
-                localStorage.setItem('cookiesAccepted', 'true');
-                cookieConsent.classList.remove('show');
-            });
-            
-            // Auto-focus username field
-            document.getElementById('username').focus();
-            
-            // Toggle password visibility
-            togglePassword.addEventListener('click', function() {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                this.classList.toggle('fa-eye');
-                this.classList.toggle('fa-eye-slash');
-            });
-            
-            // Client-side validation
-            loginForm.addEventListener('submit', function(e) {
-                const username = document.getElementById('username').value.trim();
-                const password = document.getElementById('password').value;
-                
-                if (!username || !password) {
-                    e.preventDefault();
-                    showError('Please fill in both username and password fields');
-                    return false;
-                }
-                
-                // Show loading state
-                loginBtn.classList.add('loading');
-                loginBtn.querySelector('span').textContent = 'Logging in...';
-            });
-            
-            // Check for password managers that might autofill
-            setTimeout(() => {
-                if (document.getElementById('password').value) {
-                    document.getElementById('remember').checked = true;
-                }
-            }, 300);
-            
-            // Social login handlers (placeholder)
-            document.querySelector('.social-btn.google').addEventListener('click', function() {
-                window.location.href = 'auth/google.php';
-            });
-            
-            document.querySelector('.social-btn.github').addEventListener('click', function() {
-                window.location.href = 'auth/github.php';
-            });
-            
-            // Error animation
-            function showError(message) {
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'alert error';
-                errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i><span>${message}</span>`;
-                
-                const existingAlert = document.querySelector('.alert');
-                if (existingAlert) {
-                    existingAlert.replaceWith(errorDiv);
-                } else {
-                    loginForm.insertBefore(errorDiv, loginForm.firstChild);
-                }
-                
-                // Add animation
-                errorDiv.style.animation = 'none';
-                void errorDiv.offsetWidth; // Trigger reflow
-                errorDiv.style.animation = 'slideInDown 0.3s ease-out';
-            }
-            
-            // Add pulse animation on focus
-            const inputs = document.querySelectorAll('.form-control');
-            inputs.forEach(input => {
-                input.addEventListener('focus', function() {
-                    this.parentElement.style.animation = 'pulse 0.5s ease';
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.parentElement.style.animation = '';
-                });
-            });
-        });
-    </script>
+    
+    <noscript>
+        <!-- Fallback for when JavaScript is disabled -->
+        <link rel="stylesheet" href="assets/css/main.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    </noscript>
 </body>
-</html>
+</html> 
