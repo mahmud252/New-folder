@@ -1119,4 +1119,29 @@ $system_version = "1.05";
                         <div style="font-size:0.9rem;margin-top:3px">Check out what's new.</div>
                     </div>
                     <button style="margin-left:10px;background:none;border:none;color:white;cursor:pointer" onclick="this.parentNode.remove()">
-                        <i class="fas fa
+                        <i class="fas fa                    </button>
+                `;
+                document.body.appendChild(updateNotice);
+                
+                // Store current version
+                localStorage.setItem('lastVersionSeen', currentVersion);
+            }
+        });
+        // Add to your JS
+const darkModeToggle = document.getElementById('dark-mode-toggle');
+darkModeToggle.addEventListener('click', () => {
+  document.documentElement.classList.toggle('dark-mode');
+  localStorage.setItem('darkMode', document.documentElement.classList.contains('dark-mode'));
+});
+
+// Initialize
+if (localStorage.getItem('darkMode') === 'true') {
+  document.documentElement.classList.add('dark-mode');
+}<!-- Privacy-focused alternative to Google Analytics -->
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+<script async defer src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+    </script>
+</body>
+</html>

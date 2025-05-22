@@ -5,91 +5,66 @@ require_once 'includes/auth.php';
 // Redirect if already logged in
 if (isLoggedIn()) {
     header("Location: " . (isAdmin() ? "admin/dashboard.php" : "user/dashboard.php"));
-    exit();
+    exit;
 }
 
 $error = '';
 $username = '';
 $remember = false;
 
-// Check for existing remember me cookie
-if (isset($_COOKIE['remember_token'])) {
+// Auto-login via Remember Token
+if (!empty($_COOKIE['remember_token'])) {
     require_once 'includes/database.php';
-    $token = $_COOKIE['remember_token'];
-    $stmt = $pdo->prepare("SELECT user_id, username FROM remember_tokens WHERE token = ? AND expires_at > NOW()");
-    $stmt->execute([$token]);
-    $tokenData = $stmt->fetch();
-    
-    if ($tokenData) {
+    $stmt = $pdo->prepare("SELECT user_id, username FROM remember_tokens WHERE token = ? AND expires_at > NOW() LIMIT 1");
+    $stmt->execute([$_COOKIE['remember_token']]);
+    if ($tokenData = $stmt->fetch()) {
         if (login($tokenData['username'], '', true)) {
             header("Location: " . (isAdmin() ? "admin/dashboard.php" : "user/dashboard.php"));
-            exit();
+            exit;
         }
     }
-    // Clear invalid cookie
     setcookie('remember_token', '', time() - 3600, '/', '', true, true);
 }
 
-// Check for login attempts and implement rate limiting
-if (isset($_SESSION['login_attempts'])) {
-    $lastAttempt = $_SESSION['last_login_attempt'] ?? 0;
-    $timeSinceLastAttempt = time() - $lastAttempt;
-    
-    if ($_SESSION['login_attempts'] >= 3) {
-        if ($timeSinceLastAttempt < 30) {
-            $error = 'Too many login attempts. Please wait ' . (30 - $timeSinceLastAttempt) . ' seconds.';
-        } else {
-            // Reset attempts if time window has passed
-            unset($_SESSION['login_attempts']);
-            unset($_SESSION['last_login_attempt']);
-        }
-    }
+// Rate limit
+$loginAttempts = $_SESSION['login_attempts'] ?? 0;
+$lastAttempt = $_SESSION['last_login_attempt'] ?? 0;
+$timeSinceLastAttempt = time() - $lastAttempt;
+
+if ($loginAttempts >= 3 && $timeSinceLastAttempt < 30) {
+    $error = "Too many login attempts. Please wait " . (30 - $timeSinceLastAttempt) . " seconds.";
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && empty($error)) {
-    // Sanitize inputs
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error) {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     $remember = isset($_POST['remember']);
-    
-    // Basic validation
-    if (empty($username) || empty($password)) {
+
+    if (!$username || !$password) {
         $error = 'Both username and password are required';
     } else {
-        // Track login attempts
-        if (!isset($_SESSION['login_attempts'])) {
-            $_SESSION['login_attempts'] = 0;
-        }
-        $_SESSION['login_attempts']++;
+        $_SESSION['login_attempts'] = $loginAttempts + 1;
         $_SESSION['last_login_attempt'] = time();
-        
+
         if (login($username, $password)) {
-            // Reset attempt counter on successful login
-            unset($_SESSION['login_attempts']);
-            unset($_SESSION['last_login_attempt']);
-            
-            // Handle "Remember Me" functionality
+            unset($_SESSION['login_attempts'], $_SESSION['last_login_attempt']);
+
             if ($remember) {
                 $token = bin2hex(random_bytes(32));
-                $expires = time() + 60 * 60 * 24 * 30; // 30 days
-                
-       
-                $stmt = $pdo->prepare("INSERT INTO remember_tokens (user_id, token, expires_at) VALUES (?, ?, FROM_UNIXTIME(?))");
-                $stmt->execute([$_SESSION['user_id'], $token, $expires]);
-                
+                $expires = time() + 2592000; // 30 days
+                $pdo->prepare("INSERT INTO remember_tokens (user_id, token, expires_at) VALUES (?, ?, FROM_UNIXTIME(?))")
+                    ->execute([$_SESSION['user_id'], $token, $expires]);
                 setcookie('remember_token', $token, [
                     'expires' => $expires,
                     'path' => '/',
-                    'domain' => '',
                     'secure' => true,
                     'httponly' => true,
                     'samesite' => 'Strict'
                 ]);
             }
-            
-            // Redirect to appropriate dashboard
+
             header("Location: " . (isAdmin() ? "admin/dashboard.php" : "user/dashboard.php"));
-            exit();
+            exit;
         } else {
             $error = 'Invalid username or password';
         }
