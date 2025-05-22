@@ -4,13 +4,18 @@ require_once 'config.php';
 /**
  * Format bytes to human-readable format
  */
-function formatFileSize($bytes) {
-    $units = ['bytes', 'KB', 'MB', 'GB', 'TB'];
-    for ($i = 0; $bytes >= 1024 && $i < count($units) - 1; $i++) {
-        $bytes /= 1024;
+if (!function_exists('formatFileSize')) {
+    function formatFileSize($bytes) {
+        $units = ['bytes', 'KB', 'MB', 'GB', 'TB'];
+        $i = 0;
+        while ($bytes >= 1024 && $i < count($units) - 1) {
+            $bytes /= 1024;
+            $i++;
+        }
+        return ($i === 0) ? $bytes . ' ' . $units[$i] : round($bytes, 2) . ' ' . $units[$i];
     }
-    return round($bytes, 2) . ' ' . $units[$i];
 }
+
 
 function getUserById($id) {
     global $conn;

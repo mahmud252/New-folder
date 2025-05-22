@@ -1102,7 +1102,7 @@ $lastUpload = !empty($files) ? date('M d, Y', strtotime(end($files)['upload_date
                                 <?php elseif (strpos($file['filetype'] ?? '', 'video') !== false): ?>
                                     <video controls>
                                         <source src="<?php echo htmlspecialchars($file['filepath']); ?>" 
-                                                type="<?php echo htmlspecialchars($file['filetype'] ?? 'video/mp4'); ?>">
+                                                type="<?php echo htmlspecialchars($file['filetype'] ?? 'video/'); ?>">
                                         Your browser doesn't support videos
                                     </video>
                                 <?php else: ?>
