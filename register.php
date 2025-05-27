@@ -1,4 +1,8 @@
 <?php
+// Start output buffering to improve performance
+ob_start();
+
+// Load configuration and authentication
 require_once 'includes/config.php';
 require_once 'includes/auth.php';
 
@@ -8,6 +12,7 @@ if (isLoggedIn()) {
     exit();
 }
 
+// Initialize variables
 $error = '';
 $success = false;
 $formData = [
@@ -16,24 +21,23 @@ $formData = [
     'username' => ''
 ];
 
+// Process form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    require_once 'includes/auth.php';
-    
-    // Sanitize inputs
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $username = trim($_POST['username'] ?? '');
+    // Sanitize inputs efficiently
+    $name = isset($_POST['name']) ? trim($_POST['name']) : '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $username = isset($_POST['username']) ? trim($_POST['username']) : '';
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
     
-    // Store form data for repopulation
+    // Store sanitized form data
     $formData = [
-        'name' => htmlspecialchars($name),
-        'email' => htmlspecialchars($email),
-        'username' => htmlspecialchars($username)
+        'name' => htmlspecialchars($name, ENT_QUOTES, 'UTF-8'),
+        'email' => htmlspecialchars($email, ENT_QUOTES, 'UTF-8'),
+        'username' => htmlspecialchars($username, ENT_QUOTES, 'UTF-8')
     ];
     
-    // Validate inputs
+    // Validate inputs with early returns for better performance
     if (empty($name) || empty($email) || empty($username) || empty($password)) {
         $error = 'All fields are required';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -58,6 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 }
+
+// Start HTML output with optimized structure
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -66,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - File Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
+ <style>
 :root {
     --primary-color: #4361ee;
     --primary-hover: #3a56d4;
@@ -368,7 +374,7 @@ body {
         <?php if ($error): ?>
             <div class="alert error">
                 <i class="fas fa-exclamation-circle"></i>
-                <?php echo htmlspecialchars($error); ?>
+                <?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?>
             </div>
         <?php endif; ?>
         
@@ -407,7 +413,6 @@ body {
                                value="<?php echo $formData['username'] ?? ''; ?>" required
                                minlength="4" autocomplete="username">
                     </div>
-                    <div class="requirements">Minimum 4 characters</div>
                 </div>
                 
                 <div class="form-group">
@@ -422,20 +427,6 @@ body {
                     </div>
                     <div class="password-strength">
                         <div class="strength-meter" id="strengthMeter"></div>
-                    </div>
-                    <div class="requirements" id="passwordRequirements">
-                        <div class="requirement invalid" data-requirement="length">
-                            <i class="fas fa-circle"></i>
-                            <span>At least 8 characters</span>
-                        </div>
-                        <div class="requirement invalid" data-requirement="uppercase">
-                            <i class="fas fa-circle"></i>
-                            <span>At least 1 uppercase letter</span>
-                        </div>
-                        <div class="requirement invalid" data-requirement="number">
-                            <i class="fas fa-circle"></i>
-                            <span>At least 1 number</span>
-                        </div>
                     </div>
                 </div>
                 
@@ -464,79 +455,61 @@ body {
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const passwordInput = document.getElementById('password');
-            const confirmPasswordInput = document.getElementById('confirm_password');
-            const togglePasswordButtons = document.querySelectorAll('.toggle-password');
-            const registerForm = document.getElementById('registerForm');
-            const registerBtn = document.getElementById('registerBtn');
-            
-            // Toggle password visibility
-            togglePasswordButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const input = this.parentElement.querySelector('input');
-                    const icon = this.querySelector('i');
-                    
-                    if (input.type === 'password') {
-                        input.type = 'text';
-                        icon.classList.replace('fa-eye', 'fa-eye-slash');
-                        this.setAttribute('aria-label', 'Hide password');
-                    } else {
-                        input.type = 'password';
-                        icon.classList.replace('fa-eye-slash', 'fa-eye');
-                        this.setAttribute('aria-label', 'Show password');
-                    }
-                });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Password toggle functionality
+        document.querySelectorAll('.toggle-password').forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.parentElement.querySelector('input');
+                const icon = this.querySelector('i');
+                const isPassword = input.type === 'password';
+                
+                input.type = isPassword ? 'text' : 'password';
+                icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+                this.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
             });
-            
-            // Password strength checker
+        });
+        
+        // Password strength meter
+        const passwordInput = document.getElementById('password');
+        if (passwordInput) {
             passwordInput.addEventListener('input', function() {
                 const password = this.value;
                 const strengthMeter = document.getElementById('strengthMeter');
-                const requirements = {
-                    length: password.length >= 8,
-                    uppercase: /[A-Z]/.test(password),
-                    number: /[0-9]/.test(password)
-                };
                 
-                // Update requirement indicators
-                Object.keys(requirements).forEach(key => {
-                    const element = document.querySelector(`[data-requirement="${key}"]`);
-                    if (requirements[key]) {
-                        element.classList.add('valid');
-                        element.classList.remove('invalid');
-                        element.querySelector('i').className = 'fas fa-check-circle';
-                    } else {
-                        element.classList.add('invalid');
-                        element.classList.remove('valid');
-                        element.querySelector('i').className = 'fas fa-circle';
-                    }
-                });
+                // Calculate strength (0-4)
+                let strength = 0;
+                if (password.length >= 8) strength++;
+                if (/[A-Z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
                 
-                // Calculate strength score
-                const strength = Object.values(requirements).filter(Boolean).length;
+                // Update meter
                 strengthMeter.className = 'strength-meter strength-' + strength;
             });
-            
-            // Form validation
+        }
+        
+        // Form submission handler
+        const registerForm = document.getElementById('registerForm');
+        if (registerForm) {
             registerForm.addEventListener('submit', function(e) {
-                const password = passwordInput.value;
-                const confirmPassword = confirmPasswordInput.value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm_password').value;
                 
                 if (password !== confirmPassword) {
                     e.preventDefault();
                     alert('Passwords do not match!');
-                    confirmPasswordInput.focus();
                 } else {
-                    // Show loading state
-                    registerBtn.classList.add('loading');
-                    registerBtn.innerHTML = '<span>Creating account...</span>';
+                    const btn = document.getElementById('registerBtn');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
                 }
             });
-            
-            // Focus on first field
-            document.getElementById('name').focus();
-        });
+        }
+    });
     </script>
 </body>
 </html>
+<?php
+// Flush output buffer
+ob_end_flush();
+?>

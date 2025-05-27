@@ -844,7 +844,7 @@ body {
                 <li><a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
             <div class="sidebar-footer">
-                <p>© <?php echo date('Y'); ?> Your Company</p>
+                <p>© <?php echo date('Y'); ?></p>
                 <p>v1.0.5</p>
             </div>
         </div>
