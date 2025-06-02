@@ -841,6 +841,7 @@ body {
                 <li><a href="storage.php"><i class="fas fa-database"></i> Storage</a></li>
                 <li><a href="history.php"><i class="fas fa-history"></i> Activity</a></li>
                 <li><a href="settings.php"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="user_messages.php"><i class="fas fa-cog"></i> text</a></li>
                 <li><a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
             <div class="sidebar-footer">

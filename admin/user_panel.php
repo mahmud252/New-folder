@@ -492,7 +492,7 @@ if ($result && $result->num_rows > 0) {
         <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
         <li class="active"><a href="users.php"><i class="fas fa-users"></i> User Management</a></li>
         <li><a href="files.php"><i class="fas fa-file-upload"></i> File Management</a></li>
-        <li><a href="Admin_messages.php"><i class="fas fa-cog"></i> Settings</a></li>
+        <li><a href="admin-contact.php"><i class="fas fa-cog"></i> Settings</a></li>
         <li><a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
       </ul>
     </div>

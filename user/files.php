@@ -66,266 +66,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
     <title>My Uploaded Files</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #4361ee;
-            --primary-dark: #3a56d4;
-            --sidebar-bg: #2c3e50;
-            --sidebar-text: #ffffff;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --success: #4caf50;
-            --error: #f44336;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-
-        body {
-            background-color: #f5f7fb;
-            color: var(--text-color);
-        }
-
-        /* Top Navigation Bar */
-        .navbar {
-            display: none;
-            background-color: var(--sidebar-bg);
-            color: white;
-            padding: 15px 20px;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .navbar-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .toggle-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        /* Dashboard Layout */
-        .dashboard-container {
-            display: flex;
-            min-height: 100vh;
-            padding-top: 60px;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            background-color: var(--sidebar-bg);
-            color: var(--sidebar-text);
-            position: fixed;
-            height: calc(100vh - 60px);
-            overflow-y: auto;
-            transition: transform 0.3s ease;
-            z-index: 999;
-        }
-
-        .sidebar h2 {
-            text-align: center;
-            padding: 20px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar ul {
-            list-style: none;
-        }
-
-        .sidebar ul li {
-            padding: 15px 20px;
-            transition: all 0.2s;
-        }
-
-        .sidebar ul li a {
-            text-decoration: none;
-            color: var(--sidebar-text);
-            display: flex;
-            align-items: center;
-        }
-
-        .sidebar ul li a i {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
-        }
-
-        .sidebar ul li.active,
-        .sidebar ul li:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        /* Main Content */
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            flex-grow: 1;
-            transition: margin 0.3s ease;
-        }
-
-        /* Upload Form */
-        .upload-form {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 30px;
-        }
-
-        .upload-form h2 {
-            margin-bottom: 15px;
-            color: var(--primary);
-        }
-
-        /* Drag and drop area */
-        .dropzone {
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            padding: 30px;
-            text-align: center;
-            margin-bottom: 20px;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .dropzone.active {
-            border-color: var(--primary);
-            background-color: rgba(67, 97, 238, 0.05);
-        }
-
-        .dropzone i {
-            font-size: 48px;
-            color: var(--primary);
-            margin-bottom: 15px;
-        }
-
-        .dropzone p {
-            margin-bottom: 10px;
-        }
-
-        .file-upload-info {
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        /* File preview container */
-        .file-previews {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .file-preview {
-            width: 80px;
-            height: 80px;
-            position: relative;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .file-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .file-preview .file-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            background: #f0f0f0;
-            color: #666;
-        }
-
-        .file-preview .remove-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: var(--error);
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        /* Upload limits info */
-        .upload-limits {
-            background: #f8f9fa;
-            padding: 10px 15px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-        }
-
-        .upload-limits i {
-            color: var(--primary);
-            margin-right: 5px;
-        }
-
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.3s;
-        }
-
-        .btn:hover {
-            background: var(--primary-dark);
-        }
-
-        .btn:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
-        }
-
-        /* Progress Bar */
-        .progress-container {
-            display: none;
-            margin: 15px 0;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 10px;
-            background: #e0e0e0;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 5px;
-        }
-
-        .progress {
-            height: 100%;
-            background: var(--primary);
-            width: 0%;
-            transition: width 0.3s;
-        }
-
+        body { font-family: 'Poppins', Arial, sans-serif; background: #f4f7fa; margin: 0; }
+        .navbar { background: #4a90e2; color: #fff; padding: 12px 0; }
+        .navbar-content { display: flex; align-items: center; gap: 18px; padding-left: 24px; }
+        .navbar h2 { margin: 0; font-size: 1.3rem; }
+        .toggle-btn { background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; }
+        .dashboard-container { display: flex; min-height: 100vh; }
+        .sidebar { background: #232946; color: #fff; width: 220px; padding: 24px 0 0 0; min-height: 100vh; }
+        .sidebar h2 { font-size: 1.2rem; text-align: center; margin-bottom: 18px; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar ul li { margin: 0; }
+        .sidebar ul li a { display: block; color: #fff; text-decoration: none; padding: 13px 28px; transition: background 0.2s; }
+        .sidebar ul li.active, .sidebar ul li a:hover { background: #4a90e2; }
+        .main-content { flex: 1; padding: 32px 24px; }
+        .upload-form { background: #fff; border-radius: 10px; padding: 24px; margin-bottom: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);}
+        .upload-form h2 { margin-top: 0; font-size: 1.2rem; }
+        .alert { padding: 10px 16px; border-radius: 6px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+        .alert.success { background: #e0f7e9; color: #1b7e3c; }
+        .alert.error { background: #ffeaea; color: #c0392b; }
+        .upload-limits { font-size: 0.97rem; color: #555; margin-bottom: 12px; }
+        .upload-limits i { color: #4a90e2; margin-right: 6px; }
+        .form-group { margin-bottom: 18px; }
+        .dropzone { border: 2px dashed #4a90e2; border-radius: 8px; padding: 32px 0; text-align: center; color: #4a90e2; cursor: pointer; margin-bottom: 10px; transition: border 0.2s; }
+        .dropzone.active { border-color: #232946; background: #f0f4ff; }
+        .dropzone i { font-size: 2.2rem; }
+        .file-previews { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .file-preview { position: relative; width: 60px; height: 60px; border-radius: 6px; overflow: hidden; background: #f0f4ff; display: flex; align-items: center; justify-content: center; }
+        .file-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .file-icon { font-size: 2rem; color: #4a90e2; }
+        .remove-btn { position: absolute; top: 2px; right: 4px; background: #fff; color: #c0392b; border-radius: 50%; width: 18px; height: 18px; font-size: 1rem; text-align: center; line-height: 17px; cursor: pointer; }
+        .progress-container { display: none; margin: 15px 0; }
+        .progress-bar { width: 100%; height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden; margin-bottom: 5px; }
+        .progress { height: 100%; background: #4a90e2; width: 0%; transition: width 0.3s; }
         /* Alerts */
         .alert {
             padding: 10px 15px;
@@ -435,6 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
         }
     </style>
 </head>
+<body>
    <!-- Top Navigation Bar (Mobile) -->
    <nav class="navbar">
         <div class="navbar-content">
@@ -450,8 +223,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
         <div class="sidebar" id="sidebar">
             <h2>User Panel</h2>
             <ul>
-                <li class="active"><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="files.php"><i class="fas fa-file-upload"></i> My Uploaded Files</a></li>
+                <li><a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li class="active"><a href="files.php"><i class="fas fa-file-upload"></i> My Uploaded Files</a></li>
                 <li><a href="storage.php"><i class="fas fa-database"></i> My Storage</a></li>
                 <li><a href="history.php"><i class="fas fa-history"></i> My Login History</a></li>
                 <li><a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
@@ -489,7 +262,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
                         <div class="file-previews" id="filePreviews"></div>
                     </div>
 
-                    <div class="progress-container">
+                    <div class="progress-container" style="display:none;">
                         <div class="progress-bar">
                             <div class="progress" id="progressBar"></div>
                         </div>
@@ -591,6 +364,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
             const uploadBtn = document.getElementById('uploadBtn');
             const fileCountDisplay = document.getElementById('fileCount');
             const totalSizeDisplay = document.getElementById('totalSize');
+            const progressContainer = document.querySelector('.progress-container');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
             const MAX_FILES = 120;
             const MAX_SIZE = 600; // 600MB
 
@@ -645,6 +421,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
                 // Validate files
                 if (files.length > MAX_FILES) {
                     alert(`You can upload maximum ${MAX_FILES} files at once`);
+                    fileInput.value = '';
                     return;
                 }
 
@@ -660,6 +437,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
                         const img = document.createElement('img');
                         img.src = URL.createObjectURL(file);
                         preview.appendChild(img);
+                    } else if (file.type.startsWith('video/')) {
+                        const icon = document.createElement('div');
+                        icon.className = 'file-icon';
+                        icon.innerHTML = `<i class="fas fa-film"></i>`;
+                        preview.appendChild(icon);
                     } else {
                         const icon = document.createElement('div');
                         icon.className = 'file-icon';
@@ -686,6 +468,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
                     alert(`Total size (${totalSizeMB}MB) exceeds ${MAX_SIZE}MB limit`);
                     fileInput.value = '';
                     filePreviews.innerHTML = '';
+                    updateFileInfo();
                     return;
                 }
 
@@ -711,23 +494,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
                 uploadBtn.disabled = fileCount === 0;
             }
 
-            // File upload progress
+            // File upload progress (AJAX for speed, no page reload)
             document.getElementById('uploadForm').addEventListener('submit', function (e) {
-                const progressContainer = document.querySelector('.progress-container');
-                const progressBar = document.getElementById('progressBar');
-                const progressText = document.getElementById('progressText');
+                e.preventDefault();
+                const files = fileInput.files;
+                if (!files.length) return;
 
-                progressContainer.style.display = 'block';
+                progressContainer.style.display = 'flex';
                 uploadBtn.disabled = true;
                 uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
 
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += Math.random() * 10;
-                    if (progress > 90) clearInterval(interval);
-                    progressBar.style.width = progress + '%';
-                    progressText.textContent = Math.round(progress) + '%';
-                }, 300);
+                const formData = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    formData.append('files[]', files[i]);
+                }
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'files.php', true);
+
+                xhr.upload.onprogress = function (e) {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        progressBar.style.width = percent + '%';
+                        progressText.textContent = percent + '%';
+                    }
+                };
+
+                xhr.onload = function () {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Files';
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '100%';
+                    if (xhr.status === 200) {
+                        // Reload page to show new files
+                        window.location.reload();
+                    } else {
+                        alert('Upload failed. Please try again.');
+                    }
+                };
+
+                xhr.onerror = function () {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Files';
+                    alert('Upload failed. Please try again.');
+                };
+
+                xhr.send(formData);
             });
 
             // Format file size
@@ -741,5 +553,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
         });
     </script>
 </body>
-
 </html>
