@@ -1,63 +1,91 @@
 <?php
+// Version 1.15
 require_once '../includes/config.php';
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 requireAdmin();
 
-// Get file ID from URL
-$file_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-
-// Fetch file data for confirmation
+$error = '';
 $file = [];
-$sql = "SELECT f.id, f.filename, f.filepath, f.filetype, f.uploaded_at, 
-               u.username, u.email 
-        FROM files f 
-        JOIN users u ON f.user_id = u.id 
-        WHERE f.id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $file_id);
-$stmt->execute();
-$result = $stmt->get_result();
 
-if ($result && $result->num_rows > 0) {
-    $file = $result->fetch_assoc();
-} else {
-    header("Location: files.php?error=File not found");
+$file_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+if ($file_id <= 0) {
+    header("Location: files.php?error=Invalid file ID");
     exit();
 }
 
-// Handle form submission
+try {
+    $sql = "SELECT f.id, f.filename, f.filepath, f.filetype, f.filesize, f.uploaded_at, 
+                   u.id AS user_id, u.username, u.email 
+            FROM files f 
+            JOIN users u ON f.user_id = u.id 
+            WHERE f.id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $file_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        $file = $result->fetch_assoc();
+    } else {
+        header("Location: files.php?error=File not found");
+        exit();
+    }
+} catch (Exception $e) {
+    error_log("DB error: " . $e->getMessage());
+    header("Location: files.php?error=Database error");
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Check if confirmation was received
-    if (isset($_POST['confirm_delete'])) {
+    if (!isset($_POST['csrf_token'])) {
+        $error = "Security token missing";
+    } elseif (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $error = "Invalid security token";
+    } elseif (isset($_POST['confirm_delete'])) {
         try {
-            // Get full file path
-            $file_path = "../user/" . $file['filepath'];
-            
-            // Delete file from filesystem
+            $conn->begin_transaction();
+
+            $file_path = "../user_uploads/" . $file['filepath'];
+
             if (file_exists($file_path)) {
-                unlink($file_path);
+                if (!unlink($file_path)) {
+                    throw new Exception("File system delete failed");
+                }
             }
-            
-            // Delete record from database
+
             $delete_sql = "DELETE FROM files WHERE id = ?";
             $delete_stmt = $conn->prepare($delete_sql);
             $delete_stmt->bind_param("i", $file_id);
-            $delete_stmt->execute();
-            
+
+            if (!$delete_stmt->execute()) {
+                throw new Exception("Database record delete failed");
+            }
+
+            $log_msg = sprintf(
+                "File deleted - ID: %d, Name: %s, User: %s (ID: %d)",
+                $file['id'], $file['filename'], $file['username'], $file['user_id']
+            );
+            logAction($conn, $_SESSION['user_id'], 'DELETE_FILE', $log_msg);
+
+            $conn->commit();
             header("Location: files.php?success=File deleted successfully");
             exit();
         } catch (Exception $e) {
-            header("Location: files.php?error=Error deleting file: " . urlencode($e->getMessage()));
-            exit();
+            $conn->rollback();
+            error_log("Delete error: " . $e->getMessage());
+            $error = "Error deleting file: " . $e->getMessage();
         }
     } else {
-        // User cancelled the deletion
         header("Location: files.php");
         exit();
     }
 }
+
+$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 ?>
+<!-- Version 1.15 -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -525,6 +553,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </button>
                         <a href="files.php" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Cancel
+                            <!-- Version 1.15 -->
+
                         </a>
                     </div>
                 </form>

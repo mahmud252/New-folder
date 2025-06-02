@@ -583,6 +583,13 @@ $lastUpload = !empty($files) ? date('M d, Y', strtotime(end($files)['upload_date
     .animate__animated {
       animation-duration: 0.5s;
     }
+    .toast {
+    transition: opacity 0.3s, transform 0.3s;
+}
+.modal {
+    transition: opacity 0.3s ease;
+}
+
   </style>
 </head>
 <body>
@@ -713,7 +720,7 @@ $lastUpload = !empty($files) ? date('M d, Y', strtotime(end($files)['upload_date
               </div>
               <div class="file-actions">
                 <a href="<?= $filePath ?>" download="<?= $fileName ?>" class="btn"><i class="fas fa-download"></i> Download</a>
-                <button class="btn btn-danger" onclick="confirmDelete(<?= $fileId ?>)"><i class="fas fa-trash-alt"></i> Delete</button>
+                <a href="<?= $filePath ?>" delete="<?= $fileName ?>" class="btn"><i class="fas fa-deleted"></i> delete</a>
               </div>
             </article>
             <?php endforeach; ?>
@@ -747,325 +754,246 @@ $lastUpload = !empty($files) ? date('M d, Y', strtotime(end($files)['upload_date
   </div>
 
   <script>
-    // Create floating particles
-    function createParticles() {
-      const particleCount = 25;
-      const particlesContainer = document.getElementById('particles');
-      
-      for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.classList.add('particle');
-        
-        // Random size between 5px and 15px
-        const size = Math.random() * 10 + 5;
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        
-        // Random position
-        particle.style.left = `${Math.random() * 100}vw`;
-        particle.style.top = `${Math.random() * 100}vh`;
-        
-        // Random animation duration and delay
-        const duration = Math.random() * 20 + 10;
-        const delay = Math.random() * 5;
-        particle.style.animationDuration = `${duration}s`;
-        particle.style.animationDelay = `${delay}s`;
-        
-        // Random color variation
-        const hue = 270 + Math.random() * 20 - 10; // Purple hue range
-        particle.style.background = `hsl(${hue}, 80%, 70%)`;
-        particle.style.opacity = Math.random() * 0.4 + 0.2;
-        
-        particlesContainer.appendChild(particle);
-      }
+  // Floating particles
+  function createParticles() {
+    const particleCount = 25;
+    const container = document.getElementById('particles');
+    for(let i=0; i<particleCount; i++) {
+      const p = document.createElement('div');
+      p.classList.add('particle');
+      const size = Math.random()*10 + 5;
+      p.style.width = p.style.height = size + 'px';
+      p.style.left = Math.random()*100 + 'vw';
+      p.style.top = Math.random()*100 + 'vh';
+      p.style.animationDuration = (Math.random()*20 + 10) + 's';
+      p.style.animationDelay = Math.random()*5 + 's';
+      const hue = 270 + (Math.random()*20 - 10);
+      p.style.background = `hsl(${hue}, 80%, 70%)`;
+      p.style.opacity = Math.random()*0.4 + 0.2;
+      container.appendChild(p);
     }
-    
-    // Create floating icons
-    function createFloatingIcons() {
-      const icons = ['fa-file', 'fa-hdd', 'fa-database', 'fa-cloud', 
-                    'fa-save', 'fa-file-upload', 'fa-file-download'];
-      const iconCount = 15;
-      const floatingIcons = document.getElementById('floatingIcons');
-      
-      for (let i = 0; i < iconCount; i++) {
-        const icon = document.createElement('i');
-        const randomIcon = icons[Math.floor(Math.random() * icons.length)];
-        icon.classList.add('fas', randomIcon, 'floating-icon');
-        
-        // Random position
-        const left = Math.random() * 100;
-        const top = Math.random() * 100;
-        icon.style.left = `${left}%`;
-        icon.style.top = `${top}%`;
-        
-        // Random size
-        const size = Math.random() * 20 + 15;
-        icon.style.fontSize = `${size}px`;
-        
-        // Random animation duration and delay
-        const duration = Math.random() * 20 + 15;
-        const delay = Math.random() * 10;
-        icon.style.animationDuration = `${duration}s`;
-        icon.style.animationDelay = `${delay}s`;
-        
-        // Random color variation
-        const hue = 270 + Math.random() * 20 - 10; // Purple hue range
-        icon.style.color = `hsl(${hue}, 80%, 70%)`;
-        icon.style.opacity = Math.random() * 0.2 + 0.1;
-        
-        floatingIcons.appendChild(icon);
-      }
+  }
+
+  // Floating icons
+  function createFloatingIcons() {
+    const icons = ['fa-file', 'fa-hdd', 'fa-database', 'fa-cloud', 'fa-save', 'fa-file-upload', 'fa-file-download'];
+    const iconCount = 15;
+    const container = document.getElementById('floatingIcons');
+    for(let i=0; i<iconCount; i++) {
+      const icon = document.createElement('i');
+      icon.classList.add('fas', icons[Math.floor(Math.random()*icons.length)], 'floating-icon');
+      icon.style.left = Math.random()*100 + '%';
+      icon.style.top = Math.random()*100 + '%';
+      icon.style.fontSize = (Math.random()*20 + 15) + 'px';
+      icon.style.animationDuration = (Math.random()*20 + 15) + 's';
+      icon.style.animationDelay = Math.random()*10 + 's';
+      const hue = 270 + (Math.random()*20 - 10);
+      icon.style.color = `hsl(${hue}, 80%, 70%)`;
+      icon.style.opacity = Math.random()*0.2 + 0.1;
+      container.appendChild(icon);
     }
-    
-    // Toggle sidebar function
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('show');
-      
-      // Toggle menu button icon
-      const mobileBtn = document.getElementById('mobileMenuBtn');
-      const icon = mobileBtn.querySelector('i');
-      
-      if (sidebar.classList.contains('show')) {
-        icon.classList.replace('fa-bars', 'fa-times');
-      } else {
-        icon.classList.replace('fa-times', 'fa-bars');
-      }
+  }
+
+  // Sidebar toggle
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('show');
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const icon = mobileBtn.querySelector('i');
+    if (sidebar.classList.contains('show')) {
+      icon.classList.replace('fa-bars', 'fa-times');
+    } else {
+      icon.classList.replace('fa-times', 'fa-bars');
     }
-    
-    // Initialize the page
-    document.addEventListener('DOMContentLoaded', function() {
-      const mobileBtn = document.getElementById('mobileMenuBtn');
-      const sidebar = document.getElementById('sidebar');
-      const topNav = document.getElementById('topNav');
-      
-      // Initialize background elements
-      createParticles();
-      createFloatingIcons();
-      
-      // Toggle sidebar when button is clicked
-      mobileBtn.addEventListener('click', function(e) {
-        toggleSidebar();
-        createRippleEffect(e, this);
+  }
+
+  // Ripple effect
+  function createRippleEffect(event, element) {
+    const rect = element.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const ripple = document.createElement('span');
+    ripple.classList.add('ripple-effect');
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    element.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  }
+
+  // Open preview modal
+  function openModal(src, ext) {
+    const modal = document.getElementById('previewModal');
+    const modalContent = modal.querySelector('.modal-content');
+    modalContent.innerHTML = '<span class="close-btn" title="Close preview">&times;</span>';
+
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext.toLowerCase())) {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = 'Preview image';
+      modalContent.appendChild(img);
+    } else if (['mp4', 'webm', 'ogg'].includes(ext.toLowerCase())) {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.autoplay = true;
+      const source = document.createElement('source');
+      source.src = src;
+      source.type = `video/${ext.toLowerCase()}`;
+      video.appendChild(source);
+      modalContent.appendChild(video);
+    } else {
+      // Show download for other files
+      const downloadBox = document.createElement('div');
+      downloadBox.style.background = 'white';
+      downloadBox.style.padding = '40px';
+      downloadBox.style.borderRadius = '8px';
+      downloadBox.style.textAlign = 'center';
+      downloadBox.style.color = '#333';
+
+      const fileIcon = document.createElement('i');
+      fileIcon.className = 'fas fa-file-alt';
+      fileIcon.style.fontSize = '60px';
+      fileIcon.style.color = '#4a90e2';
+      fileIcon.style.marginBottom = '20px';
+
+      const fileName = document.createElement('p');
+      fileName.textContent = src.split('/').pop();
+      fileName.style.wordBreak = 'break-all';
+      fileName.style.marginBottom = '20px';
+
+      const downloadBtn = document.createElement('a');
+      downloadBtn.href = src;
+      downloadBtn.download = src.split('/').pop();
+      downloadBtn.className = 'btn';
+      downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download File';
+
+      downloadBox.appendChild(fileIcon);
+      downloadBox.appendChild(fileName);
+      downloadBox.appendChild(downloadBtn);
+
+      modalContent.appendChild(downloadBox);
+    }
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    // Attach close event to close button
+    modalContent.querySelector('.close-btn').addEventListener('click', closeModal);
+  }
+
+  // Close modal
+  function closeModal() {
+    const modal = document.getElementById('previewModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    // Pause videos if any
+    const videos = modal.querySelectorAll('video');
+    videos.forEach(v => v.pause());
+  }
+
+  // Close modal when clicking outside modal-content
+  document.getElementById('previewModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeModal();
+    }
+  });
+
+  // Delete modal logic
+  let fileToDelete = null;
+  function confirmDelete(fileId) {
+    fileToDelete = fileId;
+    document.getElementById('deleteModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+    fileToDelete = null;
+  }
+  document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = true;
+    try {
+      // Example AJAX call - replace with your own backend URL
+      const response = await fetch('delete_file.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `id=${encodeURIComponent(fileToDelete)}`
       });
-      
-      // Close sidebar when clicking outside on mobile
-      document.addEventListener('click', function(event) {
-        if (window.innerWidth <= 992) {
-          const isClickInsideSidebar = sidebar.contains(event.target);
-          const isClickOnMobileBtn = event.target === mobileBtn || mobileBtn.contains(event.target);
-          
-          if (!isClickInsideSidebar && !isClickOnMobileBtn && sidebar.classList.contains('show')) {
-            toggleSidebar();
-          }
+      const result = await response.json();
+      if (result.success) {
+        const item = document.querySelector(`.media-item[data-id="${fileToDelete}"]`);
+        if (item) item.remove();
+        alert('File deleted successfully');
+      } else {
+        alert(result.error || 'Delete failed');
+      }
+    } catch(e) {
+      alert('Error deleting file');
+    } finally {
+      btn.disabled = false;
+      closeDeleteModal();
+    }
+  });
+
+  // Sidebar toggle button & ripple effect init
+  document.addEventListener('DOMContentLoaded', () => {
+    createParticles();
+    createFloatingIcons();
+
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    mobileBtn.addEventListener('click', e => {
+      toggleSidebar();
+      createRippleEffect(e, mobileBtn);
+    });
+
+    // Close sidebar if clicking outside on mobile
+    document.addEventListener('click', e => {
+      const sidebar = document.getElementById('sidebar');
+      const mobileBtn = document.getElementById('mobileMenuBtn');
+      if(window.innerWidth <= 992) {
+        if (!sidebar.contains(e.target) && !mobileBtn.contains(e.target) && sidebar.classList.contains('show')) {
+          toggleSidebar();
+        }
+      }
+    });
+
+    // Navbar scroll effect
+    const topNav = document.getElementById('topNav');
+    window.addEventListener('scroll', () => {
+      if(window.scrollY > 10) {
+        topNav.classList.add('scrolled');
+      } else {
+        topNav.classList.remove('scrolled');
+      }
+    });
+
+    // Ripple effect on buttons
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('click', e => createRippleEffect(e, btn));
+    });
+
+    // Animate media items on scroll
+    function animateOnScroll() {
+      const items = document.querySelectorAll('.media-item:not(.animate__fadeIn)');
+      items.forEach((item, i) => {
+        const pos = item.getBoundingClientRect().top;
+        const screen = window.innerHeight / 1.3;
+        if (pos < screen) {
+          setTimeout(() => item.classList.add('animate__fadeIn'), i * 100);
         }
       });
-      
-      // Navbar effect on scroll
-      window.addEventListener('scroll', function() {
-        if (window.scrollY > 10) {
-          topNav.classList.add('scrolled');
-        } else {
-          topNav.classList.remove('scrolled');
-        }
-      });
-      
-      // Add ripple effect to all buttons with ripple class
-      document.querySelectorAll('.btn').forEach(button => {
-        button.addEventListener('click', function(e) {
-          createRippleEffect(e, this);
-        });
-      });
-      
-      // Animate media items on scroll
-      const animateOnScroll = function() {
-        const mediaItems = document.querySelectorAll('.media-item:not(.animate__fadeIn)');
-        
-        mediaItems.forEach((item, index) => {
-          const itemPosition = item.getBoundingClientRect().top;
-          const screenPosition = window.innerHeight / 1.3;
-          
-          if (itemPosition < screenPosition) {
-            // Stagger the animations
-            setTimeout(() => {
-              item.classList.add('animate__fadeIn');
-            }, index * 100);
-          }
-        });
-      };
-      
-      window.addEventListener('scroll', animateOnScroll);
-      // Initial check in case elements are already visible
-      animateOnScroll();
-    });
-    
-    // Create ripple effect
-    function createRippleEffect(event, element) {
-      const rect = element.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      
-      const ripple = document.createElement('span');
-      ripple.classList.add('ripple-effect');
-      ripple.style.left = `${x}px`;
-      ripple.style.top = `${y}px`;
-      element.appendChild(ripple);
-      
-      setTimeout(() => {
-        ripple.remove();
-      }, 600);
     }
-    
-    // Preview modal functionality
-    function openModal(src, ext) {
-      const modal = document.getElementById('previewModal');
-      const modalContent = modal.querySelector('.modal-content');
-      
-      // Clear previous content
-      modalContent.innerHTML = '';
-      
-      // Create appropriate content based on file type
-      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext)) {
-        const img = document.createElement('img');
-        img.src = src;
-        img.alt = 'Preview';
-        modalContent.appendChild(img);
-      } else if (['mp4', 'webm', 'ogg'].includes(ext)) {
-        const video = document.createElement('video');
-        video.controls = true;
-        video.autoplay = true;
-        
-        const source = document.createElement('source');
-        source.src = src;
-        source.type = `video/${ext}`;
-        video.appendChild(source);
-        
-        modalContent.appendChild(video);
-      } else {
-        // For other file types, show a download button
-        const downloadBox = document.createElement('div');
-        downloadBox.style.background = 'white';
-        downloadBox.style.padding = '40px';
-        downloadBox.style.borderRadius = '8px';
-        downloadBox.style.textAlign = 'center';
-        
-        const fileIcon = document.createElement('i');
-        fileIcon.className = 'fas fa-file-alt';
-        fileIcon.style.fontSize = '60px';
-        fileIcon.style.color = '#4a90e2';
-        fileIcon.style.marginBottom = '20px';
-        
-        const fileName = document.createElement('p');
-        fileName.textContent = src.split('/').pop();
-        fileName.style.wordBreak = 'break-all';
-        fileName.style.marginBottom = '20px';
-        
-        const downloadBtn = document.createElement('a');
-        downloadBtn.href = src;
-        downloadBtn.download = src.split('/').pop();
-        downloadBtn.className = 'btn';
-        downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download File';
-        
-        downloadBox.appendChild(fileIcon);
-        downloadBox.appendChild(fileName);
-        downloadBox.appendChild(downloadBtn);
-        modalContent.appendChild(downloadBox);
-      }
-      
-      modal.style.display = "flex";
-      document.body.style.overflow = "hidden";
+    window.addEventListener('scroll', animateOnScroll);
+    animateOnScroll();
+  });
+
+  // Close modals on Escape key
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape') {
+      closeModal();
+      closeDeleteModal();
     }
-    
-    function closeModal() {
-      document.getElementById('previewModal').style.display = "none";
-      document.body.style.overflow = "auto";
-      
-      // Pause any videos when closing modal
-      const videos = document.querySelectorAll('#previewModal video');
-      videos.forEach(video => {
-        video.pause();
-      });
-    }
-    
-    // Close modal when pressing Escape key
-    document.addEventListener('keydown', function(event) {
-      if (event.key === 'Escape') {
-        closeModal();
-        closeDeleteModal();
-      }
-    });
-    
-    // Delete confirmation functionality
-    let fileToDelete = null;
-    
-    function confirmDelete(fileId) {
-      fileToDelete = fileId;
-      document.getElementById('deleteModal').style.display = 'flex';
-      document.body.style.overflow = "hidden";
-    }
-    
-    function closeDeleteModal() {
-      document.getElementById('deleteModal').style.display = 'none';
-      document.body.style.overflow = "auto";
-      fileToDelete = null;
-    }
-    
-    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-      const btnText = document.getElementById('deleteBtnText');
-      const spinner = document.getElementById('deleteSpinner');
-      
-      btnText.style.display = 'none';
-      spinner.style.display = 'inline-block';
-      
-      // Here you would make an actual AJAX call to delete the file
-      // For demonstration, we'll simulate it with a timeout
-      setTimeout(() => {
-        // This would be your fetch/AJAX call in a real implementation
-        /*
-        fetch(`delete_file.php?id=${fileToDelete}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ confirm: true })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            // Remove the deleted file from the UI
-            document.querySelector(`.media-item[data-id="${fileToDelete}"]`).remove();
-            showToast('File deleted successfully', 'success');
-          } else {
-            showToast('Error deleting file', 'error');
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          showToast('Error deleting file', 'error');
-        })
-        .finally(() => {
-          btnText.style.display = 'inline';
-          spinner.style.display = 'none';
-          closeDeleteModal();
-        });
-        */
-        
-        // For demo purposes, we'll just show an alert
-        btnText.style.display = 'inline';
-        spinner.style.display = 'none';
-        closeDeleteModal();
-        alert('File delete functionality would be implemented here. File ID: ' + fileToDelete);
-        
-        // In a real implementation, you would remove the file element here
-        // document.querySelector(`.media-item[data-id="${fileToDelete}"]`).remove();
-      }, 1500);
-    });
-    
-    // Show toast notification (you can implement this if needed)
-    function showToast(message, type = 'info') {
-      // Implement toast notification if desired
-      console.log(`${type}: ${message}`);
-    }
-  </script>
+  });
+</script>
 </body>
 </html>
